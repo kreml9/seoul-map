@@ -68,6 +68,8 @@
     .photo-gallery img { height: 180px; min-width: 200px; }
   }
 
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
   .fullscreen-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 10000; align-items: center; justify-content: center; flex-direction: column; }
   .fullscreen-overlay.active { display: flex; }
   .fullscreen-overlay img { max-width: 92vw; max-height: 85vh; object-fit: contain; border-radius: 4px; user-select: none; }
@@ -99,9 +101,11 @@ const C = {
   market:'#f97316', district:'#6366f1', museum:'#0ea5e9', event:'#ef4444',
   hidden:'#14b8a6', trek:'#84cc16', shop:'#d946ef',
   gf_ded: '#16a34a',
-  gf_opt: '#3b82f6'
+  gf_opt: '#3b82f6',
+  today: '#ff0000'
 };
 const CAT = {
+  today:{n:'🚩 Сегодня вечер',e:'🚩'},
   palace:{n:'🏛️ Дворцы',e:'🏛️'}, park:{n:'🌳 Парки',e:'🌳'}, view:{n:'🌅 Смотровые',e:'🌅'},
   photo:{n:'📸 Фото-споты',e:'📸'}, market:{n:'🛒 Рынки',e:'🛒'}, district:{n:'🏘️ Районы',e:'🏘️'},
   museum:{n:'🖼️ Музеи',e:'🖼️'}, event:{n:'🎪 События',e:'🎪'}, hidden:{n:'💎 Hidden gems',e:'💎'},
@@ -114,10 +118,16 @@ const layers = {};
 Object.keys(CAT).forEach(k => { layers[k] = L.layerGroup().addTo(map); });
 
 function mkIcon(color, emoji) {
+  const isToday = emoji === '🚩';
+  const size = isToday ? 46 : 30;
+  const fs = isToday ? 22 : 15;
+  const border = isToday ? '3px solid #fff' : '2.5px solid white';
+  const shadow = isToday ? '0 0 12px 4px rgba(255,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4)' : '0 2px 6px rgba(0,0,0,0.3)';
+  const anim = isToday ? 'animation:pulse 1.5s ease-in-out infinite;' : '';
   return L.divIcon({
     className: '',
-    html: `<div style="width:30px;height:30px;background:${color};border:2.5px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1">${emoji}</div>`,
-    iconSize: [30,30], iconAnchor: [15,15], popupAnchor: [0,-17]
+    html: `<div style="width:${size}px;height:${size}px;background:${color};border:${border};border-radius:50%;box-shadow:${shadow};display:flex;align-items:center;justify-content:center;font-size:${fs}px;line-height:1;${anim}z-index:${isToday?9999:1}">${emoji}</div>`,
+    iconSize: [size,size], iconAnchor: [size/2,size/2], popupAnchor: [0,-size/2-2]
   });
 }
 
@@ -258,6 +268,12 @@ function add(cat, lat, lng, name, kr, type, info, hours, warn, addr, search, io,
     marker.getPopup().update();
   });
 }
+
+// === 🚩 СЕГОДНЯ ВЕЧЕР (19 апреля) ===
+add('today',37.5157,126.9959,'Car-Free Jamsu','잠수교','🌉 Мост без машин! Маркет, еда, музыка','Воскресенье = мост закрыт для машин. Фуд-траки, бинбэги, музыканты прямо над рекой. Бесплатно. ⚠️ Стритфуд = глютен, берите свою еду','до ~17:00–19:00',null,'서울 서초구 잠수교',null,'out','1–2 ч');
+add('today',37.5136,127.0017,'Banpo Fountain','반포대교 달빛무지개분수','🌈 Самый длинный фонтан в мире! Сеансы с 19:30','1.14 км радужных фонтанов под музыку. Сеансы по 20 мин: 19:30, 20:00, 20:30, 21:00. Смотреть снизу с набережной. Бесплатно','19:30, 20:00, 20:30, 21:00',null,'서울 서초구 반포한강공원','Banpo Bridge Rainbow Fountain Seoul','out','30 мин');
+add('today',37.5125,126.9960,'Sevit Islands','세빛섬','✨ Светящиеся острова. Ночью = sci-fi','3 платформы на воде, ночью LED-подсветка в тумане. Рестораны над водой. Пешком от Банпо фонтана 5 мин','до 22:00+',null,'서울 서초구 올림픽대로 683',null,'both','30–60 мин');
+add('today',37.5669,127.0094,'DDP LED розы','동대문디자인플라자','🌹 Тысячи светящихся роз + фасад Захи Хадид','Поле LED-роз перед зданием без единого угла. Лучше после 20:00 когда темно. Бесплатно, круглосуточно','Круглосуточно',null,'서울 중구 을지로 281','Dongdaemun Design Plaza night LED roses','out','30–60 мин');
 
 // === ДВОРЦЫ ===
 add('palace',37.5796,126.9770,'Gyeongbokgung','경복궁','Главный дворец Чосон (1395)','Самый большой и парадный дворец Сеула — тронный зал Кынджонджон, павильон Хянвонджон на озере, королевские сады. Смена стражи в костюмах Чосон у главных ворот Кванхвамун (10:00 и 14:00). Royal Pass 10,000₩ даёт вход во все 5 дворцов на 3 месяца. В ханбоке (прокат у ворот ~15,000₩) вход бесплатный','09:00–18:00, Вт выходной',null,'서울 종로구 사직로 161',null,'out','2–3 ч');
